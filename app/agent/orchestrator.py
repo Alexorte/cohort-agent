@@ -1,0 +1,130 @@
+from __future__ import annotations
+
+from app.actions.action_service import ActionService
+from app.agent.guardrails import Guardrails
+from app.agent.intent_parser import IntentParser
+from app.agent.memory_store import MemoryStore
+from app.agent.response_builder import ResponseBuilder
+from app.cohort.cohort_service import CohortService
+
+
+class Orchestrator:
+    def __init__(
+        self,
+        memory: MemoryStore,
+        parser: IntentParser,
+        guardrails: Guardrails,
+        cohort_service: CohortService,
+        action_service: ActionService,
+        response_builder: ResponseBuilder,
+    ) -> None:
+        self.memory = memory
+        self.parser = parser
+        self.guardrails = guardrails
+        self.cohort_service = cohort_service
+        self.action_service = action_service
+        self.response_builder = response_builder
+
+    def handle_message(self, session_id: str, message: str):
+        state = self.memory.get(session_id)
+        has_active_cohort = state["active_cohort_id"] is not None
+
+        parsed = self.parser.parse(message, has_active_cohort=has_active_cohort)
+        filters = self.guardrails.validate_filters(parsed.filters)
+
+        if parsed.intent == "create_cohort":
+            cohort = self.cohort_service.create_cohort(filters)
+            self.memory.update(
+                session_id,
+                active_cohort_id=cohort["cohort_id"],
+                active_cohort_definition=cohort["definition"],
+                last_user_intent=parsed.intent,
+            )
+            #Diferenciar singular y plural en la respuesta
+            count = cohort["size"]
+            label = "pacientes" if count != 1 else "paciente"
+            
+            return self.response_builder.build_text(
+                session_id=session_id,
+                message=f"He creado una cohorte con {count} {label}.",
+                cohort_id=cohort["cohort_id"],
+                cohort_size=cohort["size"],
+                filters_applied=cohort["definition"],
+                tables_used=["patients", "conditions", "allergies", "medications"],
+                data={"patient_ids": cohort["patient_ids"]},
+            )
+
+        if parsed.intent == "refine_cohort":
+            if not state["active_cohort_id"]:
+                return self.response_builder.build_text(
+                    session_id=session_id,
+                    message="No hay una cohorte activa para refinar.",
+                )
+
+            cohort = self.cohort_service.refine_cohort(state["active_cohort_id"], filters)
+            self.memory.update(
+                session_id,
+                active_cohort_id=cohort["cohort_id"],
+                active_cohort_definition=cohort["definition"],
+                last_user_intent=parsed.intent,
+            )
+            #Diferenciar singular y plural en la respuesta
+            count = cohort["size"]
+            label = "pacientes" if count != 1 else "paciente"
+            
+            return self.response_builder.build_text(
+                session_id=session_id,
+                message=f"He refinado la cohorte. Ahora tiene {count} {label}.",
+                cohort_id=cohort["cohort_id"],
+                cohort_size=cohort["size"],
+                filters_applied=cohort["definition"],
+                tables_used=["patients", "conditions", "allergies", "medications"],
+                data={"patient_ids": cohort["patient_ids"]},
+            )
+
+        if parsed.intent == "get_stats":
+            if not state["active_cohort_id"]:
+                return self.response_builder.build_text(
+                    session_id=session_id,
+                    message="No hay una cohorte activa para calcular estadísticas.",
+                )
+
+            cohort_id = state["active_cohort_id"]
+            summary = self.cohort_service.compute_summary(cohort_id)
+            top_conditions = self.cohort_service.top_conditions(cohort_id)
+            top_medications = self.cohort_service.top_medications(cohort_id)
+
+            return self.response_builder.build_text(
+                session_id=session_id,
+                message="Aquí tienes el resumen de la cohorte activa.",
+                cohort_id=cohort_id,
+                cohort_size=summary.get("total_patients"),
+                filters_applied=state["active_cohort_definition"],
+                tables_used=["patients", "conditions", "medications"],
+                data={
+                    "summary": summary,
+                    "top_conditions": top_conditions,
+                    "top_medications": top_medications,
+                },
+            )
+
+        if parsed.intent == "run_action":
+            if not state["active_cohort_id"]:
+                return self.response_builder.build_text(
+                    session_id=session_id,
+                    message="No hay una cohorte activa sobre la que ejecutar la acción.",
+                )
+
+            result = self.action_service.run(parsed.action, state["active_cohort_id"], parsed.payload)
+            return self.response_builder.build_text(
+                session_id=session_id,
+                message=result["message"],
+                cohort_id=state["active_cohort_id"],
+                filters_applied=state["active_cohort_definition"],
+                data=result,
+            )
+
+        return self.response_builder.build_text(
+            session_id=session_id,
+            message="No he podido interpretar la petición con suficiente fiabilidad.",
+        )
