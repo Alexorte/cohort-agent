@@ -31,7 +31,8 @@ class ParsedIntent(BaseModel):
     action: str | None = None
     payload: dict[str, Any] = Field(default_factory=dict)
     confidence: float = 0.0
-
+    warnings: list[str] = Field(default_factory=list)
+    unknown_terms: list[str] = Field(default_factory=list)
 
 class CohortDefinition(BaseModel):
     include_conditions: list[str] = Field(default_factory=list)
@@ -59,3 +60,5 @@ class ChatResponse(BaseModel):
     filters_applied: dict[str, Any] = Field(default_factory=dict)
     tables_used: list[str] = Field(default_factory=list)
     data: dict[str, Any] = Field(default_factory=dict)
+    warnings: list[str] = Field(default_factory=list)
+    unknown_terms: list[str] = Field(default_factory=list)

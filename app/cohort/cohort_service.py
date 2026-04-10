@@ -5,7 +5,6 @@ from typing import Any
 
 from app.data.duckdb_engine import DuckDBEngine
 
-
 class CohortService:
     def __init__(self, engine: DuckDBEngine) -> None:
         self.engine = engine
@@ -150,6 +149,46 @@ class CohortService:
                 )
             """)
 
+        table_filters = filters.get("table_filters", [])
+        for tf in table_filters:
+            table = tf["table"]
+            column = tf["column"]
+            operator = tf["operator"]
+            value = tf["value"]
+            value_type = tf.get("value_type", "text")
+
+            alias_map = {
+                "allergies": "a",
+                "conditions": "c",
+                "medications": "m",
+                "encounters": "e",
+                "procedures": "pr",
+            }
+
+            alias = alias_map[table]
+
+            if value_type == "date":
+                where_clauses.append(f"""
+                    EXISTS (
+                        SELECT 1
+                        FROM {table} {alias}
+                        WHERE {alias}.PacienteID = p.PacienteID
+                        AND CAST({alias}.{column} AS DATE) {operator} CAST(? AS DATE)
+                    )
+                """)
+                params.append(value)
+
+            elif value_type == "text":
+                where_clauses.append(f"""
+                    EXISTS (
+                        SELECT 1
+                        FROM {table} {alias}
+                        WHERE {alias}.PacienteID = p.PacienteID
+                        AND lower({alias}.{column}) = lower(?)
+                    )
+                """)
+                params.append(value)
+
         age_range = filters.get("age_range")
         if age_range:
             min_op = ">=" if age_range.get("include_min", True) else ">"
@@ -176,10 +215,10 @@ class CohortService:
                     SELECT 1
                     FROM conditions c
                     WHERE c.PacienteID = p.PacienteID
-                      AND lower(c.Descripcion) LIKE lower(?)
+                      AND lower(c.Descripcion) = lower(?)
                 )
             """)
-            params.append(f"%{condition}%")
+            params.append(condition)
 
         exclude_conditions = filters.get("exclude_conditions", [])
         for condition in exclude_conditions:
@@ -188,10 +227,10 @@ class CohortService:
                     SELECT 1
                     FROM conditions c
                     WHERE c.PacienteID = p.PacienteID
-                      AND lower(c.Descripcion) LIKE lower(?)
+                      AND lower(c.Descripcion) = lower(?)
                 )
             """)
-            params.append(f"%{condition}%")
+            params.append(condition)
 
         include_allergies = filters.get("include_allergies", [])
         for allergy in include_allergies:
@@ -200,10 +239,10 @@ class CohortService:
                     SELECT 1
                     FROM allergies a
                     WHERE a.PacienteID = p.PacienteID
-                      AND lower(a.Descripcion) LIKE lower(?)
+                      AND lower(a.Descripcion) = lower(?)
                 )
             """)
-            params.append(f"%{allergy}%")
+            params.append(allergy)
 
         exclude_allergies = filters.get("exclude_allergies", [])
         for allergy in exclude_allergies:
@@ -212,10 +251,10 @@ class CohortService:
                     SELECT 1
                     FROM allergies a
                     WHERE a.PacienteID = p.PacienteID
-                      AND lower(a.Descripcion) LIKE lower(?)
+                      AND lower(a.Descripcion) = lower(?)
                 )
             """)
-            params.append(f"%{allergy}%")
+            params.append(allergy)
 
         include_medications = filters.get("include_medications", [])
         for medication in include_medications:
@@ -224,10 +263,10 @@ class CohortService:
                     SELECT 1
                     FROM medications m
                     WHERE m.PacienteID = p.PacienteID
-                      AND lower(m.Nombre) LIKE lower(?)
+                      AND lower(m.Nombre) = lower(?)
                 )
             """)
-            params.append(f"%{medication}%")
+            params.append(medication)
 
         exclude_medications = filters.get("exclude_medications", [])
         for medication in exclude_medications:
@@ -236,10 +275,10 @@ class CohortService:
                     SELECT 1
                     FROM medications m
                     WHERE m.PacienteID = p.PacienteID
-                      AND lower(m.Nombre) LIKE lower(?)
+                      AND lower(m.Nombre) = lower(?)
                 )
             """)
-            params.append(f"%{medication}%")
+            params.append(medication)
 
         sql = f"""
         SELECT DISTINCT p.PacienteID

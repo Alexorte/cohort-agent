@@ -1,4 +1,5 @@
 from __future__ import annotations
+
 from app.models.api_models import ParsedIntent
 from app.agent.nlp import (
     extract_has_filters,
@@ -6,12 +7,23 @@ from app.agent.nlp import (
     extract_allergy_filters,
     extract_age_filter,
     extract_age_range,
+    resolve_condition_terms,
+    resolve_medication_terms,
+    detect_unknown_terms,
+    extract_table_filters,
 )
 
 class IntentParser:
     def parse(self, message: str, has_active_cohort: bool) -> ParsedIntent:
         text = normalize_text(message)
+        unknown_terms = detect_unknown_terms(text)
+        warnings = []
         filters: dict = {}
+
+        if unknown_terms:
+            warnings.append(
+                "He detectado términos que no he reconocido con suficiente fiabilidad."
+            )
 
         age_range = extract_age_range(text)
         if age_range:
@@ -29,17 +41,17 @@ class IntentParser:
         for key, value in has_filters.items():
             filters[key] = value
 
-        if "diabetes" in text:
-            filters.setdefault("include_conditions", []).append("diabetes")
+        condition_terms = resolve_condition_terms(text)
+        if condition_terms:
+            filters.setdefault("include_conditions", []).extend(condition_terms)
 
-        if "hipertension" in text:
-            filters.setdefault("include_conditions", []).append("hipertensión")
+        medication_terms = resolve_medication_terms(text)
+        if medication_terms:
+            filters.setdefault("include_medications", []).extend(medication_terms)
 
-        if "asma" in text:
-            filters.setdefault("include_conditions", []).append("asma")
-
-        if "metform" in text:
-            filters.setdefault("include_medications", []).append("metform")
+        table_filters = extract_table_filters(text)
+        if table_filters:
+            filters["table_filters"] = table_filters
 
         if any(word in text for word in ["estad", "resumen", "cuant", "cuanto", "cuantos"]):
             return ParsedIntent(
@@ -47,6 +59,8 @@ class IntentParser:
                 scope="active_cohort",
                 filters=filters,
                 confidence=0.80,
+                warnings=warnings,
+                unknown_terms=unknown_terms,
             )
 
         if any(word in text for word in ["grafico", "histograma", "barras"]):
@@ -57,6 +71,8 @@ class IntentParser:
                 chart=chart,
                 filters=filters,
                 confidence=0.80,
+                warnings=warnings,
+                unknown_terms=unknown_terms,
             )
 
         if "guardar" in text:
@@ -65,7 +81,9 @@ class IntentParser:
                 scope="active_cohort",
                 action="save_cohort",
                 payload={"name": "cohorte_guardada"},
-                confidence=0.9,
+                confidence=0.90,
+                warnings=warnings,
+                unknown_terms=unknown_terms,
             )
 
         if "export" in text:
@@ -74,15 +92,21 @@ class IntentParser:
                 scope="active_cohort",
                 action="export_cohort",
                 payload={"format": "csv"},
-                confidence=0.9,
+                confidence=0.90,
+                warnings=warnings,
+                unknown_terms=unknown_terms,
             )
 
-        if has_active_cohort and any(word in text for word in ["de esos", "de esas", "solo", "excluye", "anade"]):
+        if has_active_cohort and any(
+            word in text for word in ["de esos", "de esas", "solo", "excluye", "anade", "añade", "sin", "quita", "elimina", "agrega", "agrega", "refina", "refinar", "incluye"]
+        ):
             return ParsedIntent(
                 intent="refine_cohort",
                 scope="active_cohort",
                 filters=filters,
                 confidence=0.78,
+                warnings=warnings,
+                unknown_terms=unknown_terms,
             )
 
         if filters:
@@ -91,6 +115,13 @@ class IntentParser:
                 scope="new",
                 filters=filters,
                 confidence=0.84,
+                warnings=warnings,
+                unknown_terms=unknown_terms,
             )
 
-        return ParsedIntent(intent="unknown", confidence=0.2)
+        return ParsedIntent(
+            intent="unknown",
+            confidence=0.20,
+            warnings=warnings,
+            unknown_terms=unknown_terms,
+        )

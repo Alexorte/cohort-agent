@@ -13,6 +13,9 @@ class ResponseBuilder:
         filters_applied: dict | None = None,
         tables_used: list[str] | None = None,
         data: dict | None = None,
+        warnings: list[str] | None = None,
+        unknown_terms: list[str] | None = None,
+        
     ) -> ChatResponse:
         return ChatResponse(
             session_id=session_id,
@@ -22,4 +25,6 @@ class ResponseBuilder:
             filters_applied=filters_applied or {},
             tables_used=tables_used or [],
             data=data or {},
+            warnings=warnings or [],
+            unknown_terms=unknown_terms or [],
         )

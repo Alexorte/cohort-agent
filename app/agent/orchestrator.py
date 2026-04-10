@@ -25,6 +25,11 @@ class Orchestrator:
         self.action_service = action_service
         self.response_builder = response_builder
 
+    def _append_warning_text(self, base_message: str, unknown_terms: list[str]) -> str:
+        if not unknown_terms:
+            return base_message
+
+        return f"{base_message} He detectado alguna palabra no reconocida: {', '.join(unknown_terms)}."
     def handle_message(self, session_id: str, message: str):
         state = self.memory.get(session_id)
         has_active_cohort = state["active_cohort_id"] is not None
@@ -46,12 +51,17 @@ class Orchestrator:
             
             return self.response_builder.build_text(
                 session_id=session_id,
-                message=f"He creado una cohorte con {count} {label}.",
+                message=self._append_warning_text(
+                    f"He creado una cohorte con {count} {label}.",
+                    parsed.unknown_terms,
+                ),
                 cohort_id=cohort["cohort_id"],
                 cohort_size=cohort["size"],
                 filters_applied=cohort["definition"],
                 tables_used=["patients", "conditions", "allergies", "medications"],
                 data={"patient_ids": cohort["patient_ids"]},
+                warnings=parsed.warnings,
+                unknown_terms=parsed.unknown_terms,
             )
 
         if parsed.intent == "refine_cohort":
@@ -74,12 +84,17 @@ class Orchestrator:
             
             return self.response_builder.build_text(
                 session_id=session_id,
-                message=f"He refinado la cohorte. Ahora tiene {count} {label}.",
+                message=self._append_warning_text(
+                    f"He refinado la cohorte. Ahora tiene {count} {label}.",
+                    parsed.unknown_terms,
+                ),
                 cohort_id=cohort["cohort_id"],
                 cohort_size=cohort["size"],
                 filters_applied=cohort["definition"],
                 tables_used=["patients", "conditions", "allergies", "medications"],
                 data={"patient_ids": cohort["patient_ids"]},
+                warnings=parsed.warnings,
+                unknown_terms=parsed.unknown_terms,
             )
 
         if parsed.intent == "get_stats":
@@ -96,7 +111,10 @@ class Orchestrator:
 
             return self.response_builder.build_text(
                 session_id=session_id,
-                message="Aquí tienes el resumen de la cohorte activa.",
+                message=self._append_warning_text(
+                    "Aquí tienes el resumen de la cohorte activa.",
+                    parsed.unknown_terms,
+                ),
                 cohort_id=cohort_id,
                 cohort_size=summary.get("total_patients"),
                 filters_applied=state["active_cohort_definition"],
@@ -106,6 +124,8 @@ class Orchestrator:
                     "top_conditions": top_conditions,
                     "top_medications": top_medications,
                 },
+                warnings=parsed.warnings,
+                unknown_terms=parsed.unknown_terms,
             )
 
         if parsed.intent == "run_action":
@@ -122,9 +142,16 @@ class Orchestrator:
                 cohort_id=state["active_cohort_id"],
                 filters_applied=state["active_cohort_definition"],
                 data=result,
+                warnings=parsed.warnings,
+                unknown_terms=parsed.unknown_terms,
             )
 
         return self.response_builder.build_text(
             session_id=session_id,
-            message="No he podido interpretar la petición con suficiente fiabilidad.",
+            message=self._append_warning_text(
+                "No he podido interpretar la petición con suficiente fiabilidad.",
+                parsed.unknown_terms,
+            ),
+            warnings=parsed.warnings,
+            unknown_terms=parsed.unknown_terms,
         )
