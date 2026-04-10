@@ -307,3 +307,128 @@ class CohortService:
         """
         df = self.engine.query(sql, cohort["patient_ids"])
         return df.to_dict(orient="records")
+
+    def build_followup_plan(self, cohort_id: str) -> list[dict[str, Any]]:
+        cohort = self.get_cohort(cohort_id)
+        if not cohort["patient_ids"]:
+            return []
+
+        placeholders = ",".join(["?"] * len(cohort["patient_ids"]))
+
+        sql = f"""
+        WITH cohort_patients AS (
+            SELECT
+                p.PacienteID,
+                p.Edad,
+                p.Genero,
+                p.Provincia
+            FROM patients p
+            WHERE p.PacienteID IN ({placeholders})
+        ),
+        cond AS (
+            SELECT PacienteID, COUNT(*) AS num_conditions
+            FROM conditions
+            WHERE PacienteID IN ({placeholders})
+            GROUP BY PacienteID
+        ),
+        med AS (
+            SELECT PacienteID, COUNT(*) AS num_medications
+            FROM medications
+            WHERE PacienteID IN ({placeholders})
+            GROUP BY PacienteID
+        ),
+        alg AS (
+            SELECT PacienteID, COUNT(*) AS num_allergies
+            FROM allergies
+            WHERE PacienteID IN ({placeholders})
+            GROUP BY PacienteID
+        ),
+        enc AS (
+            SELECT PacienteID, COUNT(*) AS num_encounters
+            FROM encounters
+            WHERE PacienteID IN ({placeholders})
+            GROUP BY PacienteID
+        )
+        SELECT
+            cp.PacienteID,
+            cp.Edad,
+            cp.Genero,
+            cp.Provincia,
+            COALESCE(cond.num_conditions, 0) AS num_conditions,
+            COALESCE(med.num_medications, 0) AS num_medications,
+            COALESCE(alg.num_allergies, 0) AS num_allergies,
+            COALESCE(enc.num_encounters, 0) AS num_encounters
+        FROM cohort_patients cp
+        LEFT JOIN cond ON cp.PacienteID = cond.PacienteID
+        LEFT JOIN med ON cp.PacienteID = med.PacienteID
+        LEFT JOIN alg ON cp.PacienteID = alg.PacienteID
+        LEFT JOIN enc ON cp.PacienteID = enc.PacienteID
+        ORDER BY cp.PacienteID
+        """
+
+        params = (
+            cohort["patient_ids"]
+            + cohort["patient_ids"]
+            + cohort["patient_ids"]
+            + cohort["patient_ids"]
+            + cohort["patient_ids"]
+        )
+
+        df = self.engine.query(sql, params)
+        rows = df.to_dict(orient="records")
+
+        enriched_rows = []
+        for row in rows:
+            score = 0
+            reasons = []
+
+            if row["Edad"] > 75:
+                score += 2
+                reasons.append("Edad > 75")
+
+            if row["num_conditions"] >= 2:
+                score += 2
+                reasons.append("Múltiples condiciones")
+
+            if row["num_medications"] >= 3:
+                score += 2
+                reasons.append("Polimedicación")
+
+            if row["num_allergies"] >= 1:
+                score += 1
+                reasons.append("Tiene alergias registradas")
+
+            if row["num_encounters"] >= 2:
+                score += 1
+                reasons.append("Múltiples encuentros")
+
+            if score >= 5:
+                priority_level = "Alta"
+                suggested_action = "Valoración clínica prioritaria"
+            elif score >= 3:
+                priority_level = "Media"
+                suggested_action = "Seguimiento por enfermería"
+            else:
+                priority_level = "Baja"
+                suggested_action = "Seguimiento rutinario"
+
+            enriched_rows.append({
+                "PacienteID": row["PacienteID"],
+                "Edad": row["Edad"],
+                "Genero": row["Genero"],
+                "Provincia": row["Provincia"],
+                "num_conditions": row["num_conditions"],
+                "num_medications": row["num_medications"],
+                "num_allergies": row["num_allergies"],
+                "num_encounters": row["num_encounters"],
+                "priority_score": score,
+                "priority_level": priority_level,
+                "priority_reason": ", ".join(reasons) if reasons else "Sin factores de riesgo destacados",
+                "suggested_action": suggested_action,
+            })
+
+        enriched_rows.sort(
+            key=lambda x: (-x["priority_score"], x["PacienteID"])
+        )
+
+        return enriched_rows

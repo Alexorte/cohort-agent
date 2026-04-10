@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Copiloto clínico de cohortes</title>
+  <link rel="stylesheet" href="./styles.css" />
+  <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+</head>
+<body>
+  <div class="app main-app">
+    <aside class="chat-column">
+      <div class="panel">
+        <div class="panel-header">
+          <h1>Copiloto clínico de cohortes</h1>
+          <p class="subtitle">
+            Exploración conversacional y acciones asistidas sobre cohortes clínicas
+          </p>
+        </div>
+
+        <div id="chat-messages" class="chat-messages"></div>
+
+        <form id="chat-form" class="chat-form">
+          <input
+            id="chat-input"
+            type="text"
+            placeholder="Ejemplo: Dame pacientes con diabetes mayores de 65 años"
+            autocomplete="off"
+          />
+          <button type="submit">Enviar</button>
+        </form>
+      </div>
+    </aside>
+
+    <main class="dashboard-column dashboard-main">
+      <section class="summary-grid">
+        <div class="summary-card">
+          <span class="summary-label">Cohorte activa</span>
+          <span id="cohort-id" class="summary-value">—</span>
+        </div>
+
+        <div class="summary-card">
+          <span class="summary-label">Tamaño cohorte</span>
+          <span id="cohort-size" class="summary-value">—</span>
+        </div>
+
+        <div class="summary-card">
+          <span class="summary-label">Warnings</span>
+          <span id="warnings-count" class="summary-value">0</span>
+        </div>
+
+        <div class="summary-card">
+          <span class="summary-label">Nº filtros</span>
+          <span id="filters-count" class="summary-value">0</span>
+        </div>
+      </section>
+
+      <section class="actions-section">
+        <div class="card actions-card">
+          <div class="card-header">
+            <h2>Acciones sobre la cohorte</h2>
+          </div>
+          <div class="actions-row">
+            <button id="followup-btn" class="primary-action-btn">
+              Preparar seguimiento clínico
+            </button>
+
+            <button id="reset-btn" class="secondary-action-btn">
+              Nueva conversación
+            </button>
+
+            <a class="secondary-link-btn" href="./stats.html">
+              Ver detalle
+            </a>
+          </div>
+        </div>
+      </section>
+
+      <section class="charts-grid main-charts-grid">
+        <div class="card chart-card">
+          <div class="card-header">
+            <h2>Distribución por sexo</h2>
+          </div>
+          <div id="sex-chart" class="chart chart-main"></div>
+        </div>
+
+        <div class="card chart-card">
+          <div class="card-header">
+            <h2>Condiciones más frecuentes</h2>
+          </div>
+          <div id="conditions-chart" class="chart chart-main"></div>
+        </div>
+
+        <div class="card chart-card full-width">
+          <div class="card-header">
+            <h2>Medicaciones más frecuentes</h2>
+          </div>
+          <div id="medications-chart" class="chart chart-main-large"></div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script src="./app.js"></script>
+</body>
+</html>

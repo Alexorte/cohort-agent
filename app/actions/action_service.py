@@ -5,7 +5,6 @@ import pandas as pd
 
 from app.cohort.cohort_service import CohortService
 
-
 class ActionService:
     def __init__(self, cohort_service: CohortService) -> None:
         self.cohort_service = cohort_service
@@ -39,6 +38,16 @@ class ActionService:
                 "action": action,
                 "message": "Borrador de alerta generado. Requiere validación humana.",
                 "draft": payload,
+            }
+        
+        if action == "prepare_followup_plan":
+            plan = self.cohort_service.build_followup_plan(cohort_id)
+
+            return {
+                "status": "ok",
+                "action": action,
+                "message": "He preparado un plan de seguimiento clínico para la cohorte activa. Para ver más detalles, clica en \"Ver detalles\".",
+                "followup_plan": plan,
             }
 
         raise ValueError(f"Unsupported action: {action}")

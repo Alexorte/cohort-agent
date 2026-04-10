@@ -78,6 +78,29 @@ class IntentParser:
                 warnings=warnings,
                 unknown_terms=unknown_terms,
             )
+        
+        if any(
+            phrase in text for phrase in [
+                "prepara seguimiento clinico",
+                "preparar seguimiento clinico",
+                "plan de seguimiento",
+                "seguimiento de la cohorte",
+                "prioriza pacientes",
+                "priorizar pacientes",
+                "lista priorizada",
+                "genera seguimiento clinico",
+                "generar seguimiento clinico",
+            ]
+        ):
+            return ParsedIntent(
+                intent="run_action",
+                scope="active_cohort",
+                action="prepare_followup_plan",
+                payload={},
+                confidence=0.90,
+                warnings=warnings,
+                unknown_terms=unknown_terms,
+            )
 
         if "guardar" in text:
             return ParsedIntent(

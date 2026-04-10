@@ -132,32 +132,34 @@ class Orchestrator:
                 unknown_terms=parsed.unknown_terms,
             )
         
-        if parsed.intent == "get_chart":
+        if parsed.intent == "get_stats":
             if not state["active_cohort_id"]:
                 return self.response_builder.build_text(
                     session_id=session_id,
-                    message="No hay una cohorte activa para mostrar gráficas.",
+                    message="No hay una cohorte activa para calcular estadísticas.",
                     warnings=parsed.warnings,
                     unknown_terms=parsed.unknown_terms,
                 )
 
             cohort_id = state["active_cohort_id"]
             cohort = self.cohort_service.get_cohort(cohort_id)
-            dashboard = self.chart_service.build_dashboard(cohort_id)
-
-            selected_chart = dashboard.get(parsed.chart) if parsed.chart else None
+            summary = self.cohort_service.compute_summary(cohort_id)
+            top_conditions = self.cohort_service.top_conditions(cohort_id)
+            top_medications = self.cohort_service.top_medications(cohort_id)
 
             return self.response_builder.build_text(
                 session_id=session_id,
-                message="Aquí tienes las gráficas de la cohorte activa.",
+                message="Aquí tienes el resumen de la cohorte activa.",
                 cohort_id=cohort_id,
-                cohort_size=cohort["size"],
+                cohort_size=summary.get("total_patients"),
                 filters_applied=state["active_cohort_definition"],
                 tables_used=["patients", "conditions", "medications"],
                 data={
-                    "chart": selected_chart,
-                    "charts": dashboard,
+                    "summary": summary,
+                    "top_conditions": top_conditions,
+                    "top_medications": top_medications,
                     "patient_ids": cohort["patient_ids"],
+                    "charts": self.chart_service.build_dashboard(cohort_id),
                 },
                 warnings=parsed.warnings,
                 unknown_terms=parsed.unknown_terms,
@@ -168,14 +170,30 @@ class Orchestrator:
                 return self.response_builder.build_text(
                     session_id=session_id,
                     message="No hay una cohorte activa sobre la que ejecutar la acción.",
+                    warnings=parsed.warnings,
+                    unknown_terms=parsed.unknown_terms,
                 )
 
-            result = self.action_service.run(parsed.action, state["active_cohort_id"], parsed.payload)
+            cohort_id = state["active_cohort_id"]
+            cohort = self.cohort_service.get_cohort(cohort_id)
+
+            result = self.action_service.run(
+                parsed.action,
+                cohort_id,
+                parsed.payload,
+            )
+
+            tables_used = []
+            if parsed.action == "prepare_followup_plan":
+                tables_used = ["patients", "conditions", "medications", "allergies", "encounters"]
+
             return self.response_builder.build_text(
                 session_id=session_id,
                 message=result["message"],
-                cohort_id=state["active_cohort_id"],
+                cohort_id=cohort_id,
+                cohort_size=cohort["size"],
                 filters_applied=state["active_cohort_definition"],
+                tables_used=tables_used,
                 data=result,
                 warnings=parsed.warnings,
                 unknown_terms=parsed.unknown_terms,
