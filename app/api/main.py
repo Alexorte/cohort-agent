@@ -12,8 +12,18 @@ from app.cohort.cohort_service import CohortService
 from app.config.settings import settings
 from app.data.duckdb_engine import DuckDBEngine
 from app.models.api_models import ChatRequest, ChatResponse
+from app.charts.chart_service import ChartService
+from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI(title=settings.app_name, version=settings.app_version)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 engine = DuckDBEngine()
 memory = MemoryStore()
@@ -22,6 +32,7 @@ guardrails = Guardrails()
 cohort_service = CohortService(engine)
 action_service = ActionService(cohort_service)
 response_builder = ResponseBuilder()
+chart_service = ChartService(cohort_service)
 
 orchestrator = Orchestrator(
     memory=memory,
@@ -30,8 +41,8 @@ orchestrator = Orchestrator(
     cohort_service=cohort_service,
     action_service=action_service,
     response_builder=response_builder,
+    chart_service=chart_service
 )
-
 
 @app.get("/")
 def root():
@@ -41,11 +52,9 @@ def root():
         "health": "/health"
     }
 
-
 @app.get("/health")
 def health():
     return {"status": "ok", "app": settings.app_name, "version": settings.app_version}
-
 
 @app.post("/chat", response_model=ChatResponse)
 def chat(request: ChatRequest):

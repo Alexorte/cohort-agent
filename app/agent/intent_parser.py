@@ -39,6 +39,10 @@ class IntentParser:
 
         has_filters = extract_has_filters(text)
         for key, value in has_filters.items():
+            if key == "has_allergies" and (
+                "include_allergies" in filters or "exclude_allergies" in filters
+            ):
+                continue
             filters[key] = value
 
         condition_terms = resolve_condition_terms(text)

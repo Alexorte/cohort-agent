@@ -80,7 +80,7 @@ class CohortService:
         FROM conditions
         WHERE PacienteID IN ({placeholders})
         GROUP BY Descripcion
-        ORDER BY count DESC
+        ORDER BY count DESC, label ASC
         LIMIT {limit}
         """
         df = self.engine.query(sql, cohort["patient_ids"])
@@ -97,7 +97,7 @@ class CohortService:
         FROM medications
         WHERE PacienteID IN ({placeholders})
         GROUP BY Nombre
-        ORDER BY count DESC
+        ORDER BY count DESC, label ASC
         LIMIT {limit}
         """
         df = self.engine.query(sql, cohort["patient_ids"])
@@ -291,3 +291,19 @@ class CohortService:
         if "PacienteID" not in df.columns:
             return []
         return df["PacienteID"].tolist()
+    
+    def sex_distribution(self, cohort_id: str) -> list[dict[str, int | str]]:
+        cohort = self.get_cohort(cohort_id)
+        if not cohort["patient_ids"]:
+            return []
+
+        placeholders = ",".join(["?"] * len(cohort["patient_ids"]))
+        sql = f"""
+        SELECT Genero AS label, COUNT(*) AS count
+        FROM patients
+        WHERE PacienteID IN ({placeholders})
+        GROUP BY Genero
+        ORDER BY count DESC, label ASC
+        """
+        df = self.engine.query(sql, cohort["patient_ids"])
+        return df.to_dict(orient="records")

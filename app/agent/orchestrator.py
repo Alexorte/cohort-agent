@@ -6,7 +6,7 @@ from app.agent.intent_parser import IntentParser
 from app.agent.memory_store import MemoryStore
 from app.agent.response_builder import ResponseBuilder
 from app.cohort.cohort_service import CohortService
-
+from app.charts.chart_service import ChartService
 
 class Orchestrator:
     def __init__(
@@ -17,6 +17,7 @@ class Orchestrator:
         cohort_service: CohortService,
         action_service: ActionService,
         response_builder: ResponseBuilder,
+        chart_service: ChartService,
     ) -> None:
         self.memory = memory
         self.parser = parser
@@ -24,6 +25,7 @@ class Orchestrator:
         self.cohort_service = cohort_service
         self.action_service = action_service
         self.response_builder = response_builder
+        self.chart_service = chart_service
 
     def _append_warning_text(self, base_message: str, unknown_terms: list[str]) -> str:
         if not unknown_terms:
@@ -59,7 +61,7 @@ class Orchestrator:
                 cohort_size=cohort["size"],
                 filters_applied=cohort["definition"],
                 tables_used=["patients", "conditions", "allergies", "medications"],
-                data={"patient_ids": cohort["patient_ids"]},
+                data={"patient_ids": cohort["patient_ids"], "charts": self.chart_service.build_dashboard(cohort["cohort_id"]),},
                 warnings=parsed.warnings,
                 unknown_terms=parsed.unknown_terms,
             )
@@ -92,7 +94,7 @@ class Orchestrator:
                 cohort_size=cohort["size"],
                 filters_applied=cohort["definition"],
                 tables_used=["patients", "conditions", "allergies", "medications"],
-                data={"patient_ids": cohort["patient_ids"]},
+                data={"patient_ids": cohort["patient_ids"], "charts": self.chart_service.build_dashboard(cohort["cohort_id"])},
                 warnings=parsed.warnings,
                 unknown_terms=parsed.unknown_terms,
             )
@@ -121,8 +123,41 @@ class Orchestrator:
                 tables_used=["patients", "conditions", "medications"],
                 data={
                     "summary": summary,
-                    "top_conditions": top_conditions,
+                    "top_conditions": top_conditions, 
                     "top_medications": top_medications,
+                    "patient_ids": cohort["patient_ids"],
+                    "charts": self.chart_service.build_dashboard(cohort["cohort_id"]),
+                },
+                warnings=parsed.warnings,
+                unknown_terms=parsed.unknown_terms,
+            )
+        
+        if parsed.intent == "get_chart":
+            if not state["active_cohort_id"]:
+                return self.response_builder.build_text(
+                    session_id=session_id,
+                    message="No hay una cohorte activa para mostrar gráficas.",
+                    warnings=parsed.warnings,
+                    unknown_terms=parsed.unknown_terms,
+                )
+
+            cohort_id = state["active_cohort_id"]
+            cohort = self.cohort_service.get_cohort(cohort_id)
+            dashboard = self.chart_service.build_dashboard(cohort_id)
+
+            selected_chart = dashboard.get(parsed.chart) if parsed.chart else None
+
+            return self.response_builder.build_text(
+                session_id=session_id,
+                message="Aquí tienes las gráficas de la cohorte activa.",
+                cohort_id=cohort_id,
+                cohort_size=cohort["size"],
+                filters_applied=state["active_cohort_definition"],
+                tables_used=["patients", "conditions", "medications"],
+                data={
+                    "chart": selected_chart,
+                    "charts": dashboard,
+                    "patient_ids": cohort["patient_ids"],
                 },
                 warnings=parsed.warnings,
                 unknown_terms=parsed.unknown_terms,
