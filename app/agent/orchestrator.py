@@ -61,7 +61,11 @@ class Orchestrator:
                 cohort_size=cohort["size"],
                 filters_applied=cohort["definition"],
                 tables_used=["patients", "conditions", "allergies", "medications"],
-                data={"patient_ids": cohort["patient_ids"], "charts": self.chart_service.build_dashboard(cohort["cohort_id"]),},
+                data={
+                    "patient_ids": cohort["patient_ids"],
+                    "patient_summary": self.cohort_service.patient_summary(cohort["cohort_id"]),
+                    "charts": self.chart_service.build_dashboard(cohort["cohort_id"]),
+                },
                 warnings=parsed.warnings,
                 unknown_terms=parsed.unknown_terms,
             )
@@ -94,7 +98,11 @@ class Orchestrator:
                 cohort_size=cohort["size"],
                 filters_applied=cohort["definition"],
                 tables_used=["patients", "conditions", "allergies", "medications"],
-                data={"patient_ids": cohort["patient_ids"], "charts": self.chart_service.build_dashboard(cohort["cohort_id"])},
+                data={
+                    "patient_ids": cohort["patient_ids"],
+                    "patient_summary": self.cohort_service.patient_summary(cohort["cohort_id"]),
+                    "charts": self.chart_service.build_dashboard(cohort["cohort_id"]),
+                },
                 warnings=parsed.warnings,
                 unknown_terms=parsed.unknown_terms,
             )
@@ -126,6 +134,7 @@ class Orchestrator:
                     "top_conditions": top_conditions, 
                     "top_medications": top_medications,
                     "patient_ids": cohort["patient_ids"],
+                    "patient_summary": self.cohort_service.patient_summary(cohort["cohort_id"]),
                     "charts": self.chart_service.build_dashboard(cohort["cohort_id"]),
                 },
                 warnings=parsed.warnings,
@@ -159,6 +168,7 @@ class Orchestrator:
                     "top_conditions": top_conditions,
                     "top_medications": top_medications,
                     "patient_ids": cohort["patient_ids"],
+                    "patient_summary": self.cohort_service.patient_summary(cohort["cohort_id"]),
                     "charts": self.chart_service.build_dashboard(cohort_id),
                 },
                 warnings=parsed.warnings,
@@ -185,6 +195,12 @@ class Orchestrator:
 
             tables_used = []
             if parsed.action == "prepare_followup_plan":
+                result = {
+                    **result,
+                    "patient_ids": cohort["patient_ids"],
+                    "patient_summary": self.cohort_service.patient_summary(cohort["cohort_id"]),
+                    "charts": self.chart_service.build_dashboard(cohort_id),
+                }
                 tables_used = ["patients", "conditions", "medications", "allergies", "encounters"]
 
             return self.response_builder.build_text(

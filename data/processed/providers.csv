@@ -1,0 +1,17 @@
+provider_id,clinic_id,provider_name,role,working_days,shift,slot_minutes
+PR001,CL1001,Medicina Interna Almería,Medicina Interna,"MON,TUE,WED,THU,FRI",08:00-14:00,30
+PR002,CL1001,Enfermería Almería,Enfermería,"MON,TUE,WED,THU,FRI",14:00-18:00,20
+PR003,CL1002,Medicina Interna Cádiz,Medicina Interna,"MON,TUE,WED,THU,FRI",08:00-14:00,30
+PR004,CL1002,Enfermería Cádiz,Enfermería,"MON,TUE,WED,THU,FRI",14:00-18:00,20
+PR005,CL1003,Medicina Interna Córdoba,Medicina Interna,"MON,TUE,WED,THU,FRI",08:00-14:00,30
+PR006,CL1003,Enfermería Córdoba,Enfermería,"MON,TUE,WED,THU,FRI",14:00-18:00,20
+PR007,CL1004,Medicina Interna Granada,Medicina Interna,"MON,TUE,WED,THU,FRI",08:00-14:00,30
+PR008,CL1004,Enfermería Granada,Enfermería,"MON,TUE,WED,THU,FRI",14:00-18:00,20
+PR009,CL1005,Medicina Interna Huelva,Medicina Interna,"MON,TUE,WED,THU,FRI",08:00-14:00,30
+PR010,CL1005,Enfermería Huelva,Enfermería,"MON,TUE,WED,THU,FRI",14:00-18:00,20
+PR011,CL1006,Medicina Interna Jaén,Medicina Interna,"MON,TUE,WED,THU,FRI",08:00-14:00,30
+PR012,CL1006,Enfermería Jaén,Enfermería,"MON,TUE,WED,THU,FRI",14:00-18:00,20
+PR013,CL1007,Medicina Interna Málaga,Medicina Interna,"MON,TUE,WED,THU,FRI",08:00-14:00,30
+PR014,CL1007,Enfermería Málaga,Enfermería,"MON,TUE,WED,THU,FRI",14:00-18:00,20
+PR015,CL1008,Medicina Interna Sevilla,Medicina Interna,"MON,TUE,WED,THU,FRI",08:00-14:00,30
+PR016,CL1008,Enfermería Sevilla,Enfermería,"MON,TUE,WED,THU,FRI",14:00-18:00,20

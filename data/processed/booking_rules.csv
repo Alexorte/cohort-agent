@@ -1,0 +1,4 @@
+priority_level,booking_mode,target_window_days_min,target_window_days_max,preferred_role,slot_duration_minutes,notes
+Alta,auto_book,0,3,Medicina Interna,30,Reservar directamente la primera cita disponible en la misma provincia. Permitir reprogramar o cancelar.
+Media,suggest_3_options,3,10,Enfermería,20,Proponer tres opciones en la misma provincia. El usuario confirma una.
+Baja,routine_followup,21,45,Enfermería,20,No reservar. Mostrar recomendación de seguimiento rutinario.

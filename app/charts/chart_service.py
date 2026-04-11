@@ -6,6 +6,16 @@ from app.cohort.cohort_service import CohortService
 class ChartService:
     def __init__(self, cohort_service: CohortService) -> None:
         self.cohort_service = cohort_service
+        self.PASTEL_PALETTE = [
+        "#CDB4DB",  # lila
+        "#A8DADC",  # verde agua
+        "#FBC4AB",  # melocotón
+        "#FAEDCD",  # crema
+        "#D8E2DC",  # gris verdoso
+        ]
+
+    def build_bar_colors(self, n: int) -> list[str]:
+        return [self.PASTEL_PALETTE[i % len(self.PASTEL_PALETTE)] for i in range(n)]
 
     def build_dashboard(self, cohort_id: str) -> dict:
         return {
@@ -39,7 +49,7 @@ class ChartService:
             "title": "Condiciones más frecuentes",
             "x": x,
             "y": y,
-            "colors": ["#CDB4DB"] * len(x),  # pastel lila
+            "colors": self.build_bar_colors(len(x)), 
         }
 
     def top_medications_chart(self, cohort_id: str, limit: int = 5) -> dict:
@@ -53,5 +63,5 @@ class ChartService:
             "title": "Medicaciones más frecuentes",
             "x": x,
             "y": y,
-            "colors": ["#BDE0FE"] * len(x),  # pastel azul
+            "colors": self.build_bar_colors(len(x)),  # pastel azul
         }

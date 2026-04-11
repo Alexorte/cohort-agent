@@ -76,7 +76,7 @@ class CohortService:
 
         placeholders = ",".join(["?"] * len(cohort["patient_ids"]))
         sql = f"""
-        SELECT Descripcion AS label, COUNT(*) AS count
+        SELECT Descripcion AS label, COUNT(DISTINCT PacienteID) AS count
         FROM conditions
         WHERE PacienteID IN ({placeholders})
         GROUP BY Descripcion
@@ -93,7 +93,7 @@ class CohortService:
 
         placeholders = ",".join(["?"] * len(cohort["patient_ids"]))
         sql = f"""
-        SELECT Nombre AS label, COUNT(*) AS count
+        SELECT Nombre AS label, COUNT(DISTINCT PacienteID) AS count
         FROM medications
         WHERE PacienteID IN ({placeholders})
         GROUP BY Nombre
@@ -382,26 +382,32 @@ class CohortService:
             score = 0
             reasons = []
 
+            # 1. Edad: Se mantiene igual, es un buen factor de riesgo.
             if row["Edad"] > 75:
                 score += 2
                 reasons.append("Edad > 75")
 
-            if row["num_conditions"] >= 2:
+            # 2. Condiciones: Ajustado a pluripatología (>= 4)
+            if row["num_conditions"] >= 4:
                 score += 2
-                reasons.append("Múltiples condiciones")
+                reasons.append("Pluripatología (>= 4 condiciones)")
 
-            if row["num_medications"] >= 3:
+            # 3. Medicación: Ajustado a la definición real de polimedicación (>= 5)
+            if row["num_medications"] >= 5:
                 score += 2
-                reasons.append("Polimedicación")
+                reasons.append("Polimedicación (>= 5 fármacos)")
 
+            # 4. Alergias: Mantenemos el punto, pero es el factor menos determinante de prioridad crónica
             if row["num_allergies"] >= 1:
                 score += 1
                 reasons.append("Tiene alergias registradas")
 
-            if row["num_encounters"] >= 2:
+            # 5. Encuentros: Ajustado a hiperfrecuentación (>= 4 visitas)
+            if row["num_encounters"] >= 4:
                 score += 1
-                reasons.append("Múltiples encuentros")
+                reasons.append("Alta frecuentación (>= 4 encuentros)")
 
+            # --- NUEVOS UMBRALES DE PRIORIDAD ---
             if score >= 5:
                 priority_level = "Alta"
                 suggested_action = "Valoración clínica prioritaria"
@@ -432,3 +438,18 @@ class CohortService:
         )
 
         return enriched_rows
+    
+    def patient_summary(self, cohort_id: str) -> list[dict]:
+        cohort = self.get_cohort(cohort_id)
+        if not cohort["patient_ids"]:
+            return []
+
+        placeholders = ",".join(["?"] * len(cohort["patient_ids"]))
+        sql = f"""
+        SELECT PacienteID, Edad, Genero, Provincia
+        FROM patients
+        WHERE PacienteID IN ({placeholders})
+        ORDER BY PacienteID
+        """
+        df = self.engine.query(sql, cohort["patient_ids"])
+        return df.to_dict(orient="records")

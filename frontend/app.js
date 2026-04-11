@@ -103,16 +103,48 @@ function resetDashboard() {
   }
 }
 
+function getLatestStoredResponse() {
+  try {
+    return JSON.parse(localStorage.getItem(LAST_RESPONSE_KEY) || "null");
+  } catch (error) {
+    console.error("No se pudo leer la última respuesta guardada", error);
+    return null;
+  }
+}
+
+function mergeResponses(previous, current) {
+  if (!previous) return current;
+
+  return {
+    ...previous,
+    ...current,
+    cohort_id: current.cohort_id ?? previous.cohort_id,
+    cohort_size: current.cohort_size ?? previous.cohort_size,
+    filters_applied:
+      current.filters_applied && Object.keys(current.filters_applied).length > 0
+        ? current.filters_applied
+        : previous.filters_applied,
+    warnings: current.warnings ?? previous.warnings ?? [],
+    unknown_terms: current.unknown_terms ?? previous.unknown_terms ?? [],
+    data: {
+      ...(previous.data || {}),
+      ...(current.data || {}),
+      charts: current.data?.charts ?? previous.data?.charts,
+      patient_ids: current.data?.patient_ids ?? previous.data?.patient_ids,
+      followup_plan: current.data?.followup_plan ?? previous.data?.followup_plan,
+    },
+  };
+}
+
 function persistLatestResponse(data) {
   localStorage.setItem(LAST_RESPONSE_KEY, JSON.stringify(data));
 }
 
 function restoreLatestResponse() {
   try {
-    const raw = localStorage.getItem(LAST_RESPONSE_KEY);
-    if (!raw) return;
+    const data = getLatestStoredResponse();
+    if (!data) return;
 
-    const data = JSON.parse(raw);
     renderSummary(data);
     renderCharts(data.data?.charts);
   } catch (error) {
@@ -146,6 +178,19 @@ function renderSexChart(chart) {
 function renderBarChart(containerId, chart) {
   if (!chart) return;
 
+  const fallbackPalette = [
+        "#CDB4DB",  
+        "#A8DADC",  
+        "#FBC4AB",  
+        "#FAEDCD",  
+        "#D8E2DC",
+  ];
+
+  const barColors =
+    chart.colors && chart.colors.length > 0
+      ? chart.colors
+      : (chart.x || []).map((_, index) => fallbackPalette[index % fallbackPalette.length]);
+
   Plotly.newPlot(
     containerId,
     [
@@ -153,7 +198,7 @@ function renderBarChart(containerId, chart) {
         x: chart.x,
         y: chart.y,
         type: "bar",
-        marker: { color: chart.colors },
+        marker: { color: barColors },
       },
     ],
     {
@@ -197,14 +242,20 @@ async function sendMessage(message, userVisibleMessage = null) {
       }),
     });
 
-    const data = await response.json();
+    const rawData = await response.json();
+    const previous = getLatestStoredResponse();
+    const mergedData = mergeResponses(previous, rawData);
 
-    addMessage(data.message || "Respuesta recibida.", "bot");
-    renderSummary(data);
-    renderCharts(data.data?.charts);
-    persistLatestResponse(data);
+    addMessage(
+      mergedData.message || rawData.message || "Respuesta recibida.",
+      "bot"
+    );
 
-    return data;
+    renderSummary(mergedData);
+    renderCharts(mergedData.data?.charts);
+    persistLatestResponse(mergedData);
+
+    return mergedData;
   } catch (error) {
     addMessage("Error al conectar con el backend.", "bot");
     console.error(error);

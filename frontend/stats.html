@@ -4,42 +4,37 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Detalle de cohorte</title>
-  <link rel="stylesheet" href="./styles.css" />
+  <link rel="stylesheet" href="./styles.css?v=6" />
 </head>
-<body>
-  <div class="stats-page">
+<body class="stats-body">
+  <div class="stats-page compact-stats-page">
     <header class="stats-header">
       <div>
         <h1>Detalle de cohorte</h1>
-        <p class="subtitle">Filtros, pacientes, seguimiento y warnings</p>
+        <p class="subtitle">Seguimiento clínico y agenda sugerida</p>
       </div>
       <a class="secondary-link-btn" href="./index.html">Volver al dashboard</a>
     </header>
 
-    <section class="summary-grid">
-      <div class="summary-card">
-        <span class="summary-label">Cohorte activa</span>
-        <span id="stats-cohort-id" class="summary-value">—</span>
+    <section class="booking-summary-grid compact-booking-summary-grid">
+      <div class="summary-card mini-summary-card">
+        <span class="summary-label">Auto-reservadas</span>
+        <span id="auto-booked-count" class="summary-value">0</span>
       </div>
 
-      <div class="summary-card">
-        <span class="summary-label">Tamaño cohorte</span>
-        <span id="stats-cohort-size" class="summary-value">—</span>
+      <div class="summary-card mini-summary-card">
+        <span class="summary-label">Propuestas pendientes</span>
+        <span id="pending-count" class="summary-value">0</span>
       </div>
 
-      <div class="summary-card">
-        <span class="summary-label">Warnings</span>
-        <span id="stats-warnings-count" class="summary-value">0</span>
-      </div>
-
-      <div class="summary-card">
-        <span class="summary-label">Nº filtros</span>
-        <span id="stats-filters-count" class="summary-value">0</span>
+      <div class="summary-card mini-summary-card">
+        <span class="summary-label">Seguimiento rutinario</span>
+        <span id="routine-count" class="summary-value">0</span>
       </div>
     </section>
 
-    <section class="stats-grid">
-      <div class="card">
+    <section class="stats-grid compact-stats-grid">
+      <div class="card small-filters-card">
         <div class="card-header">
           <h2>Filtros aplicados</h2>
         </div>
@@ -69,11 +64,15 @@
             <thead>
               <tr>
                 <th>PacienteID</th>
+                <th>Edad</th>
+                <th>Género</th>
+                <th>Provincia</th>
+                <th>Prioridad</th>
               </tr>
             </thead>
             <tbody id="patients-table-body">
               <tr>
-                <td class="empty-cell">Sin pacientes</td>
+                <td colspan="5" class="empty-cell">Sin pacientes</td>
               </tr>
             </tbody>
           </table>
@@ -84,26 +83,22 @@
         <div class="card-header">
           <h2>Plan de seguimiento clínico</h2>
         </div>
-        <div class="table-wrapper stats-table-wrapper large-table">
+        <div class="table-wrapper stats-table-wrapper large-table compact-large-table">
           <table class="data-table followup-table">
             <thead>
               <tr>
                 <th>PacienteID</th>
                 <th>Edad</th>
-                <th>Género</th>
                 <th>Provincia</th>
-                <th>Cond.</th>
-                <th>Med.</th>
-                <th>Alerg.</th>
-                <th>Enc.</th>
                 <th>Prioridad</th>
-                <th>Motivo</th>
+                <th>Motivo clínico</th>
+                <th>Gestión de agenda</th>
                 <th>Acción sugerida</th>
               </tr>
             </thead>
             <tbody id="followup-table-body">
               <tr>
-                <td colspan="11" class="empty-cell">
+                <td colspan="7" class="empty-cell">
                   Todavía no se ha generado un plan de seguimiento
                 </td>
               </tr>
@@ -111,18 +106,9 @@
           </table>
         </div>
       </div>
-
-      <div class="card full-span">
-        <div class="card-header">
-          <h2>Warnings y términos no reconocidos</h2>
-        </div>
-        <div id="warnings-content" class="warnings-content">
-          <p class="muted">Sin warnings</p>
-        </div>
-      </div>
     </section>
   </div>
 
-  <script src="./stats.js"></script>
+  <script src="./stats.js?v=6"></script>
 </body>
 </html>

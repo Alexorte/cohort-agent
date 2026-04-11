@@ -1,0 +1,9 @@
+clinic_id,clinic_name,province,city,address,phone,specialty,open_time,close_time,priority_high_auto_book,priority_medium_suggest_only
+CL1001,Centro de Seguimiento Crónico Almería,Almería,Almería,"Avenida Salud 2, Almería",+34 95101 201,Seguimiento crónico,08:00,18:00,yes,yes
+CL1002,Centro de Seguimiento Crónico Cádiz,Cádiz,Cádiz,"Avenida Salud 3, Cádiz",+34 95202 202,Seguimiento crónico,08:00,18:00,yes,yes
+CL1003,Centro de Seguimiento Crónico Córdoba,Córdoba,Córdoba,"Avenida Salud 4, Córdoba",+34 95303 203,Seguimiento crónico,08:00,18:00,yes,yes
+CL1004,Centro de Seguimiento Crónico Granada,Granada,Granada,"Avenida Salud 5, Granada",+34 95404 204,Seguimiento crónico,08:00,18:00,yes,yes
+CL1005,Centro de Seguimiento Crónico Huelva,Huelva,Huelva,"Avenida Salud 6, Huelva",+34 95505 205,Seguimiento crónico,08:00,18:00,yes,yes
+CL1006,Centro de Seguimiento Crónico Jaén,Jaén,Jaén,"Avenida Salud 7, Jaén",+34 95606 206,Seguimiento crónico,08:00,18:00,yes,yes
+CL1007,Centro de Seguimiento Crónico Málaga,Málaga,Málaga,"Avenida Salud 8, Málaga",+34 95707 207,Seguimiento crónico,08:00,18:00,yes,yes
+CL1008,Centro de Seguimiento Crónico Sevilla,Sevilla,Sevilla,"Avenida Salud 9, Sevilla",+34 95808 208,Seguimiento crónico,08:00,18:00,yes,yes

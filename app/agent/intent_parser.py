@@ -90,6 +90,10 @@ class IntentParser:
                 "lista priorizada",
                 "genera seguimiento clinico",
                 "generar seguimiento clinico",
+                "genera plan de seguimiento",
+                "generar plan de seguimiento",
+                "dame un seguimiento clinico",
+                "dame un plan de seguimiento",
             ]
         ):
             return ParsedIntent(

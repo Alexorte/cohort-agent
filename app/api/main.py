@@ -14,6 +14,7 @@ from app.data.duckdb_engine import DuckDBEngine
 from app.models.api_models import ChatRequest, ChatResponse
 from app.charts.chart_service import ChartService
 from fastapi.middleware.cors import CORSMiddleware
+from app.scheduling.scheduling_service import SchedulingService
 
 app = FastAPI(title=settings.app_name, version=settings.app_version)
 
@@ -30,7 +31,8 @@ memory = MemoryStore()
 parser = IntentParser()
 guardrails = Guardrails()
 cohort_service = CohortService(engine)
-action_service = ActionService(cohort_service)
+scheduling_service = SchedulingService(base_path="data/processed")
+action_service = ActionService(cohort_service, scheduling_service)
 response_builder = ResponseBuilder()
 chart_service = ChartService(cohort_service)
 

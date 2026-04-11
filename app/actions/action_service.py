@@ -4,10 +4,16 @@ from pathlib import Path
 import pandas as pd
 
 from app.cohort.cohort_service import CohortService
+from app.scheduling.scheduling_service import SchedulingService
 
 class ActionService:
-    def __init__(self, cohort_service: CohortService) -> None:
+    def __init__(
+        self,
+        cohort_service: CohortService,
+        scheduling_service: SchedulingService,
+    ) -> None:
         self.cohort_service = cohort_service
+        self.scheduling_service = scheduling_service
 
     def run(self, action: str, cohort_id: str, payload: dict) -> dict:
         if action == "save_cohort":
@@ -39,15 +45,23 @@ class ActionService:
                 "message": "Borrador de alerta generado. Requiere validación humana.",
                 "draft": payload,
             }
-        
+
         if action == "prepare_followup_plan":
-            plan = self.cohort_service.build_followup_plan(cohort_id)
+            base_plan = self.cohort_service.build_followup_plan(cohort_id)
+            enriched_plan = self.scheduling_service.enrich_followup_plan(base_plan)
+
+            auto_booked = sum(1 for row in enriched_plan if row["appointment_status"] == "auto_booked")
+            proposed = sum(1 for row in enriched_plan if row["appointment_status"] == "awaiting_user_confirmation")
 
             return {
                 "status": "ok",
                 "action": action,
-                "message": "He preparado un plan de seguimiento clínico para la cohorte activa. Para ver más detalles, clica en \"Ver detalles\".",
-                "followup_plan": plan,
+                "message": (
+                    "He preparado un plan de seguimiento clínico para la cohorte activa. "
+                    f"Reservadas automáticamente: {auto_booked}. "
+                    f"Con propuestas pendientes: {proposed}."
+                ),
+                "followup_plan": enriched_plan,
             }
 
         raise ValueError(f"Unsupported action: {action}")
