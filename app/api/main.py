@@ -15,6 +15,7 @@ from app.models.api_models import ChatRequest, ChatResponse
 from app.charts.chart_service import ChartService
 from fastapi.middleware.cors import CORSMiddleware
 from app.scheduling.scheduling_service import SchedulingService
+from pydantic import BaseModel
 
 app = FastAPI(title=settings.app_name, version=settings.app_version)
 
@@ -46,6 +47,19 @@ orchestrator = Orchestrator(
     chart_service=chart_service
 )
 
+class CancelBookingRequest(BaseModel):
+    patient_id: int
+    slot_id: str
+
+class RescheduleBookingRequest(BaseModel):
+    patient_id: int
+    current_slot_id: str
+    province: str
+
+class ConfirmSuggestedSlotRequest(BaseModel):
+    patient_id: int
+    slot_id: str
+
 @app.get("/")
 def root():
     return {
@@ -69,3 +83,32 @@ def chat(request: ChatRequest):
         raise HTTPException(status_code=400, detail=str(exc)) from exc
     except Exception as exc:
         raise HTTPException(status_code=500, detail=f"Internal error: {exc}") from exc
+
+@app.post("/actions/cancel-booking")
+def cancel_booking(request: CancelBookingRequest):
+    result = scheduling_service.cancel_booking(request.slot_id)
+    return {
+        "status": "ok",
+        "patient_id": request.patient_id,
+        **result,
+    }
+
+@app.post("/actions/reschedule-booking")
+def reschedule_booking(request: RescheduleBookingRequest):
+    result = scheduling_service.reschedule_high_priority(
+        current_slot_id=request.current_slot_id,
+        province=request.province,
+    )
+    return {
+        "status": "ok",
+        "patient_id": request.patient_id,
+        **result,
+    }
+
+@app.post("/actions/confirm-suggested-slot")
+def confirm_suggested_slot(request: ConfirmSuggestedSlotRequest):
+    result = scheduling_service.confirm_suggested_slot(
+        patient_id=request.patient_id,
+        slot_id=request.slot_id,
+    )
+    return result
