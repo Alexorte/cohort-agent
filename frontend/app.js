@@ -155,6 +155,8 @@ function restoreLatestResponse() {
 function renderSexChart(chart) {
   if (!chart) return;
 
+  const compact = window.innerWidth <= 1500;
+
   Plotly.newPlot(
     "sex-chart",
     [
@@ -162,14 +164,39 @@ function renderSexChart(chart) {
         labels: chart.labels,
         values: chart.values,
         type: "pie",
-        hole: 0.55,
+        hole: 0.6, // Un poco más pequeño para dar espacio al texto
+        textinfo: "percent", // Muestra solo el % dentro
+        textposition: "inside",
+        insidetextorientation: "horizontal", // <--- ESTO evita que se giren
         marker: { colors: chart.colors },
-        textinfo: "label+percent",
+        textinfo: "none",
+        hovertemplate: "%{label}: %{percent}<extra></extra>",
+        sort: false,
+        automargin: true,
+        domain: compact
+          ? { x: [0.18, 0.82], y: [0.18, 0.88] }
+          : { x: [0.08, 0.78], y: [0.10, 0.92] },
       },
     ],
     {
-      margin: { t: 10, b: 10, l: 10, r: 10 },
+      margin: compact
+        ? { t: 4, b: 44, l: 4, r: 4 }
+        : { t: 8, b: 8, l: 8, r: 8 },
       showlegend: true,
+      legend: compact
+        ? {
+            orientation: "h",
+            x: 0.5,
+            xanchor: "center",
+            y: -0.06,
+            yanchor: "top",
+          }
+        : {
+            orientation: "v",
+            x: 0.98,
+            xanchor: "right",
+            y: 0.95,
+          },
     },
     { responsive: true }
   );
@@ -302,4 +329,11 @@ resetBtn.addEventListener("click", () => {
 window.addEventListener("load", () => {
   renderChatHistory();
   restoreLatestResponse();
+});
+
+window.addEventListener("resize", () => {
+  const data = getLatestStoredResponse();
+  if (data?.data?.charts) {
+    renderCharts(data.data.charts);
+  }
 });

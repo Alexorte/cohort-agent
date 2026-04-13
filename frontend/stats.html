@@ -4,38 +4,41 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Detalle de cohorte</title>
-  <link rel="stylesheet" href="./styles.css?v=6" />
+  <link rel="stylesheet" href="./styles.css" />
 </head>
 <body class="stats-body">
-  <div class="stats-page compact-stats-page">
-    <header class="stats-header">
+  <div class="stats-page compact-stats-page no-page-scroll">
+    <header class="stats-header compact-stats-header">
       <div>
         <h1>Detalle de cohorte</h1>
-        <p class="subtitle">Seguimiento clínico y agenda sugerida</p>
+        <p class="subtitle">Seguimiento clínico, priorización y gestión de agenda sugerida</p>
       </div>
-      <a class="secondary-link-btn" href="./index.html">Volver al dashboard</a>
+      <a class="secondary-link-btn" href="./index.html">Volver al panel principal</a>
     </header>
 
     <section class="booking-summary-grid compact-booking-summary-grid">
-      <div class="summary-card mini-summary-card">
-        <span class="summary-label">Auto-reservadas</span>
+      <div class="summary-card mini-summary-card summary-highlight-soft">
+        <span class="summary-label">Citas autoasignadas</span>
         <span id="auto-booked-count" class="summary-value">0</span>
+        <span class="summary-meta">Pacientes de alta prioridad con reserva directa</span>
       </div>
 
       <div class="summary-card mini-summary-card">
         <span class="summary-label">Propuestas pendientes</span>
         <span id="pending-count" class="summary-value">0</span>
+        <span class="summary-meta">Requieren validación o elección de cita</span>
       </div>
 
       <div class="summary-card mini-summary-card">
         <span class="summary-label">Seguimiento rutinario</span>
         <span id="routine-count" class="summary-value">0</span>
+        <span class="summary-meta">Pacientes en monitorización no prioritaria</span>
       </div>
     </section>
 
-    <section class="stats-grid compact-stats-grid">
+    <section class="stats-grid compact-stats-grid compact-stats-grid-tight">
       <div class="card small-filters-card">
-        <div class="card-header">
+        <div class="card-header chart-header compact-chart-header compact-chart-header-minimal">
           <h2>Filtros aplicados</h2>
         </div>
         <div class="table-wrapper stats-table-wrapper">
@@ -56,7 +59,7 @@
       </div>
 
       <div class="card">
-        <div class="card-header">
+        <div class="card-header chart-header compact-chart-header compact-chart-header-minimal">
           <h2>Pacientes de la cohorte</h2>
         </div>
         <div class="table-wrapper stats-table-wrapper">
@@ -80,8 +83,9 @@
       </div>
 
       <div class="card full-span">
-        <div class="card-header">
+        <div class="card-header chart-header compact-chart-header compact-chart-header-minimal">
           <h2>Plan de seguimiento clínico</h2>
+          <p class="muted action-copy">Cada paciente muestra prioridad, motivo clínico y propuesta de agenda asociada.</p>
         </div>
         <div class="table-wrapper stats-table-wrapper large-table compact-large-table">
           <table class="data-table followup-table">
@@ -99,7 +103,7 @@
             <tbody id="followup-table-body">
               <tr>
                 <td colspan="7" class="empty-cell">
-                  Todavía no se ha generado un plan de seguimiento
+                  Todavía no se ha generado un plan de seguimiento.
                 </td>
               </tr>
             </tbody>
