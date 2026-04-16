@@ -41,7 +41,12 @@ python -m venv .venv
 
 ### 4. Acceso a la aplicación:
 
-Backend: python -m uvicorn app.api.main:app --reload
-Frontend: cd .\frontend\;python -m http.server 5500
-Acceso: http://127.0.0.1:5500/
+- **Backend:**  python -m uvicorn app.api.main:app --reload
+- **Frontend:** cd .\frontend\;python -m http.server 5500
+- **Acceso:** http://127.0.0.1:5500/
 
+## Colaboradores
+
+- **Alex** — [Linkedin](https://www.linkedin.com/in/alexortegaredondo).
+- **Celia** — [Linkedin](https://www.linkedin.com/in/celia-almendros-saelices).
+- **Javier** — [Linkedin](https://www.linkedin.com/in/javier-garcía-meneses-50b300366).
